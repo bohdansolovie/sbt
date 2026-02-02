@@ -159,8 +159,14 @@ object ScriptedPlugin extends AutoPlugin {
         group <- groupP
         page <- pageP
         files = pagedFilenames(group, page)
-        // TODO -  Fail the parser if we don't have enough files for the given page size
-        // if !files.isEmpty
+        _ <- if (files.isEmpty && page.page < page.total) {
+          Parser.failure(
+            s"Page ${page.page} of ${page.total} is empty. " +
+              s"Not enough files in group '$group' for the requested page size."
+          )
+        } else {
+          Parser.success(())
+        }
       } yield files map (f => s"$group/$f")
 
     val testID = (for (group <- groupP; name <- nameP(group)) yield (group, name))
